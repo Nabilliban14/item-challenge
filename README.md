@@ -2,6 +2,8 @@
 
 Welcome! This is a take-home coding assignment for a software engineering position. In this challenge, you'll be building a simplified version of an exam item management API with cloud infrastructure.
 
+Once you're ready to get started, read through [GETTING_STARTED.md](GETTING_STARTED.md).
+
 ## Your Task (1-3 hours)
 
 **Please do not spend more than 3 hours on this. It is not expected for your solution to be perfectly polished and we want to be respectful of your time.**
@@ -9,6 +11,7 @@ Welcome! This is a take-home coding assignment for a software engineering positi
 Build a simplified exam item management system that demonstrates your ability to design scalable, secure APIs with proper cloud infrastructure.
 
 ### 1. API Implementation (TypeScript + Node.js)
+
 Create API endpoints for managing exam items:
 
 ```
@@ -21,6 +24,7 @@ GET    /api/items/:id/audit    - Get audit trail for an item
 ```
 
 **Goals:**
+
 - Write handlers designed for AWS Lambda (serverless architecture)
 - Implement proper error handling and validation
 - Use appropriate HTTP status codes for responses
@@ -33,6 +37,7 @@ GET    /api/items/:id/audit    - Get audit trail for an item
 Define the cloud infrastructure needed to deploy this system using **either** AWS CDK **or** Terraform (your choice).
 
 **Goals:**
+
 - Use AWS CDK (TypeScript preferred) **OR** Terraform
 - Define resources: Lambda functions, API Gateway, DynamoDB (optional), IAM roles, CloudWatch logs
 - Include comments explaining your design choices
@@ -40,6 +45,7 @@ Define the cloud infrastructure needed to deploy this system using **either** AW
 - You do **not** need to actually deploy - just provide valid infrastructure code
 
 **Validation:**
+
 - For CDK: Run `cdk synth` to validate
 - For Terraform: Run `terraform plan` to validate
 
@@ -72,6 +78,7 @@ Design storage for exam items with this structure:
 ```
 
 **Goals:**
+
 - Support versioning (keep history of changes)
 - Design appropriate DynamoDB keys and indexes (documented in ARCHITECTURE.md)
 - Implement basic CRUD operations
@@ -90,9 +97,10 @@ Include a brief `ARCHITECTURE.md` file (template provided) covering:
 
 ## 🚀 Project Setup
 
-See `GETTING_STARTED.md` for detailed setup instructions.
+See [GETTING_STARTED.md](GETTING_STARTED.md) for detailed setup instructions.
 
 **Quick start:**
+
 ```bash
 pnpm install
 pnpm dev
