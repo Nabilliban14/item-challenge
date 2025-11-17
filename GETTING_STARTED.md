@@ -1,13 +1,20 @@
 # Getting Started
 
+## Prerequisites
+
+- [Node 22+](https://nodejs.org)
+- [pnpm](https://pnpm.io/installation)
+
 ## Quick Start
 
 1. **Install dependencies:**
+
    ```bash
    pnpm install
    ```
 
 2. **Start the development server:**
+
    ```bash
    pnpm dev
    ```
@@ -15,6 +22,7 @@
    The server will start at `http://localhost:3000` with hot reload enabled.
 
 3. **Test the example endpoints:**
+
    ```bash
    # Create an item
    curl -X POST http://localhost:3000/api/items \
@@ -62,18 +70,21 @@ src/
 ### Local Development vs Lambda Deployment
 
 **Local Development (what you're doing now):**
+
 - The `src/server.ts` file runs a simple HTTP server
 - Handlers are invoked directly as functions
 - In-memory storage is used by default
 - Hot reload with `pnpm dev`
 
 **Lambda Deployment (what you're designing for):**
+
 - Handlers would be deployed as individual Lambda functions
 - API Gateway would route requests to Lambda
 - DynamoDB would provide persistent storage
 - You'll define this infrastructure using CDK or Terraform
 
 **Your Task:** Write handlers that work locally but are designed with Lambda deployment in mind. Think about:
+
 - Event handling and response formats
 - Stateless design (no reliance on server memory between requests)
 - Environment variable configuration
@@ -86,6 +97,7 @@ src/
 Create handlers in `src/handlers/` for the required endpoints:
 
 **Recommended Priority (pick 2-3 to implement well):**
+
 - [ ] `POST /api/items` - Create a new exam item
 - [ ] `GET /api/items/:id` - Retrieve an item by ID
 - [ ] `PUT /api/items/:id` - Update an item
@@ -94,12 +106,14 @@ Create handlers in `src/handlers/` for the required endpoints:
 - [ ] `GET /api/items/:id/audit` - Get audit trail for an item
 
 **Steps:**
+
 1. Create handler functions in `src/handlers/` (use `example.ts` as a template)
 2. Add routes in `src/server.ts` to wire up your handlers
 3. Add validation using Zod (already installed)
 4. Test locally with curl or your preferred HTTP client
 
 **Example handler structure:**
+
 ```typescript
 export async function yourHandler(params: any) {
   try {
@@ -108,13 +122,15 @@ export async function yourHandler(params: any) {
     // Return success response
     return {
       statusCode: 200,
-      body: { /* your data */ }
+      body: {
+        /* your data */
+      },
     };
   } catch (error) {
     // Handle errors appropriately
     return {
       statusCode: 500,
-      body: { error: 'message' }
+      body: { error: "message" },
     };
   }
 }
@@ -127,11 +143,13 @@ Choose **either** CDK **or** Terraform and create infrastructure definitions.
 #### Option A: AWS CDK (TypeScript)
 
 1. **Install CDK (if needed):**
+
    ```bash
    npm install -g aws-cdk
    ```
 
 2. **Create infrastructure directory:**
+
    ```bash
    mkdir infrastructure
    cd infrastructure
@@ -139,6 +157,7 @@ Choose **either** CDK **or** Terraform and create infrastructure definitions.
    ```
 
 3. **Define resources in your CDK stack:**
+
    - Lambda functions (one per endpoint or shared)
    - API Gateway REST API
    - DynamoDB table (design the schema)
@@ -154,6 +173,7 @@ Choose **either** CDK **or** Terraform and create infrastructure definitions.
 #### Option B: Terraform
 
 1. **Create Terraform files:**
+
    ```bash
    mkdir terraform
    cd terraform
@@ -161,6 +181,7 @@ Choose **either** CDK **or** Terraform and create infrastructure definitions.
    ```
 
 2. **Define resources:**
+
    - AWS Lambda functions
    - API Gateway
    - DynamoDB table
@@ -179,16 +200,19 @@ Choose **either** CDK **or** Terraform and create infrastructure definitions.
 ### 3. Data Modeling
 
 **Already Provided:**
+
 - Type definitions in `src/types/item.ts`
 - In-memory storage in `src/storage/memory.ts` (fully functional)
 - Storage interface in `src/storage/interface.ts`
 
 **Your Tasks:**
+
 - Design a DynamoDB table schema (partition key, sort key, GSIs)
 - Document your design in `ARCHITECTURE.md`
 - **Optional:** Implement the DynamoDB storage layer in `src/storage/dynamodb.ts`
 
 **To use DynamoDB storage (optional):**
+
 ```bash
 # Set environment variable
 export USE_DYNAMODB=true
@@ -214,7 +238,6 @@ Fill out `ARCHITECTURE.md` with:
 - `pnpm build` - Compile TypeScript to JavaScript
 - `pnpm start` - Run compiled JavaScript (after build)
 
-
 ## FAQ
 
 **Q: Should I implement all 6 endpoints?**
@@ -234,6 +257,7 @@ A: No! We just want to see valid infrastructure code. Running `cdk synth` or `te
 
 **Q: The scope seems large for 3 hours. What should I prioritize?**
 A: This is intentional - we want to see how you prioritize. We recommend:
+
 - 2-3 core API endpoints fully working
 - Thoughtful data model design
 - Complete infrastructure definition
