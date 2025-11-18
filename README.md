@@ -112,6 +112,7 @@ pnpm dev
 - **AWS Knowledge:** Proper use of Lambda, API Gateway, DynamoDB, IAM, CloudWatch
 - **Infrastructure as Code:** Well-structured CDK/Terraform with best practices
 - **NoSQL Design:** Appropriate key design and access patterns
+- **Testing:** Well-structured tests with good coverage of core functionality (optional but encouraged)
 - **Prioritization:** How you approach the time constraint
 
 ## Submission

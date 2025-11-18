@@ -224,7 +224,21 @@ export DYNAMODB_TABLE_NAME=ExamItems
 pnpm dev
 ```
 
-### 4. Documentation
+### 4. Write Tests (Recommended)
+
+While tests are not required, including them demonstrates good engineering practices and gives you confidence in your implementation. See `src/__tests__/example.test.ts` for a working example.
+
+**To run tests:**
+
+```bash
+pnpm test        # Run once
+pnpm test:watch  # Run in watch mode
+pnpm test:ui     # Run with UI
+```
+
+**Note:** Given the time constraint, prioritize working code and a few well-written tests for core functionality.
+
+### 5. Documentation
 
 Fill out `ARCHITECTURE.md` with:
 
@@ -239,6 +253,9 @@ Fill out `ARCHITECTURE.md` with:
 - `pnpm dev` - Start development server with hot reload
 - `pnpm build` - Compile TypeScript to JavaScript
 - `pnpm start` - Run compiled JavaScript (after build)
+- `pnpm test` - Run tests once (after installing vitest)
+- `pnpm test:watch` - Run tests in watch mode
+- `pnpm test:ui` - Run tests with interactive UI
 
 ## FAQ
 
@@ -272,7 +289,7 @@ A: Edit `src/server.ts` and add a new condition in the request handler that matc
 A: Only implement what you need for your chosen endpoints. The interface shows what's possible, not what's required.
 
 **Q: Should I write tests?**
-A: Not required for this challenge, but you can if time permits. Focus on working code and good documentation first.
+A: Tests are optional but encouraged. A few well-written tests for your core endpoints demonstrate good engineering practices. However, given the time constraint, prioritize working code and documentation first. If you have time, add tests for your main functionality rather than trying to achieve 100% coverage.
 
 **Q: How do I know if my infrastructure code is valid?**
 A: Run `cdk synth` (for CDK) or `terraform plan` (for Terraform) - they should complete without errors.
