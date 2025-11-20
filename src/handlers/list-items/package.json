@@ -1,0 +1,11 @@
+{
+  "name": "list-items-handler",
+  "version": "1.0.0",
+  "description": "Handler for listing exam items with pagination and filtering",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
+

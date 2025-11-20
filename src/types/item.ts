@@ -53,7 +53,8 @@ export interface UpdateItemRequest {
 
 export interface ListItemsQuery {
   limit?: number;
-  offset?: number;
+  offset?: number; //keeping here so memory storage doesnt complain
   subject?: string;
   status?: string;
+  nextToken?: string;
 }

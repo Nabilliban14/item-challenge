@@ -1,0 +1,11 @@
+{
+  "name": "get-item-handler",
+  "version": "1.0.0",
+  "description": "Handler for retrieving exam items by ID",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
+

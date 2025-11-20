@@ -1,0 +1,11 @@
+{
+  "name": "create-version-handler",
+  "version": "1.0.0",
+  "description": "Handler for creating new versions of exam items",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
+

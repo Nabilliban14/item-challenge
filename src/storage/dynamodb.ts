@@ -18,9 +18,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import {
   DynamoDBDocumentClient,
   PutCommand,
-  GetCommand,
-  UpdateCommand,
-  ScanCommand,
   QueryCommand
 } from '@aws-sdk/lib-dynamodb';
 import { randomUUID } from 'crypto';
@@ -43,8 +40,9 @@ export class DynamoDBStorage implements ItemStorage {
 
   async createItem(data: CreateItemRequest): Promise<ExamItem> {
     const now = Date.now();
+    const itemId = randomUUID();
     const item: ExamItem = {
-      id: randomUUID(),
+      id: itemId,
       ...data,
       metadata: {
         ...data.metadata,
@@ -54,63 +52,180 @@ export class DynamoDBStorage implements ItemStorage {
       },
     };
 
+    // Store with composite key: id (PK) and metadata.version (SK)
+    // Also add top-level fields for GSI: latestVersion and lastModified
     await this.client.send(new PutCommand({
       TableName: this.tableName,
-      Item: item,
+      Item: {
+        ...item,
+        version: item.metadata.version, // Sort key: projects metadata.version to top-level for DynamoDB
+        latestVersion: 'true', // GSI PK: boolean stored as string for DynamoDB key
+        lastModified: item.metadata.lastModified, // GSI SK: projects metadata.lastModified to top-level
+      },
     }));
 
     return item;
   }
 
   async getItem(id: string): Promise<ExamItem | null> {
-    const result = await this.client.send(new GetCommand({
+    // Query for the latest version (highest metadata.version number)
+    const result = await this.client.send(new QueryCommand({
       TableName: this.tableName,
-      Key: { id },
+      KeyConditionExpression: 'id = :id',
+      ExpressionAttributeValues: {
+        ':id': id,
+      },
+      ScanIndexForward: false, // Sort by metadata.version DESC (via top-level version key)
+      Limit: 1, // Only get the latest version
     }));
 
-    return result.Item as ExamItem || null;
+    if (!result.Items || result.Items.length === 0) {
+      return null;
+    }
+
+    // Remove the top-level DynamoDB keys (they're only for keys/indexes)
+    // The actual data is in the item structure
+    const item = result.Items[0] as any;
+    const { version: _, latestVersion: __, lastModified: ___, ...itemData } = item;
+    return itemData as ExamItem;
   }
 
   async updateItem(id: string, data: UpdateItemRequest): Promise<ExamItem | null> {
-    const existing = await this.getItem(id);
-    if (!existing) return null;
+    // Get current version (with DynamoDB keys included)
+    const currentWithKeys = await this.getCurrentVersionWithKeys(id);
+    if (!currentWithKeys) return null;
 
-    const updated: ExamItem = {
-      ...existing,
+    // Extract the item data (remove DynamoDB-specific keys)
+    const { version: _, latestVersion: __, lastModified: ___, ...current } = currentWithKeys;
+
+    // Create new version (don't overwrite old version)
+    const newVersion: ExamItem = {
+      ...current,
       ...data,
-      content: data.content ? { ...existing.content, ...data.content } : existing.content,
+      content: data.content ? { ...current.content, ...data.content } : current.content,
       metadata: {
-        ...existing.metadata,
+        ...current.metadata,
         ...(data.metadata || {}),
         lastModified: Date.now(),
-        version: existing.metadata.version + 1,
+        version: current.metadata.version + 1,
       },
     };
 
+    // Update old version: set latestVersion to false
     await this.client.send(new PutCommand({
       TableName: this.tableName,
-      Item: updated,
+      Item: {
+        ...currentWithKeys,
+        latestVersion: 'false', // Mark old version as not latest
+      },
     }));
 
-    return updated;
+    // Store new version with composite key and GSI fields
+    await this.client.send(new PutCommand({
+      TableName: this.tableName,
+      Item: {
+        ...newVersion,
+        version: newVersion.metadata.version, // Sort key: projects metadata.version to top-level for DynamoDB
+        latestVersion: 'true', // GSI PK: mark as latest version
+        lastModified: newVersion.metadata.lastModified, // GSI SK: projects metadata.lastModified to top-level
+      },
+    }));
+
+    return newVersion;
   }
 
-  async listItems(query: ListItemsQuery): Promise<{ items: ExamItem[]; total: number }> {
-    // Note: This is a basic implementation using Scan
-    // For production, you should use Query with appropriate indexes
-    const result = await this.client.send(new ScanCommand({
+  /**
+   * Helper method to get the current version WITH DynamoDB keys
+   * Used when we need to update the old version's latestVersion flag
+   */
+  private async getCurrentVersionWithKeys(id: string): Promise<any | null> {
+    const result = await this.client.send(new QueryCommand({
       TableName: this.tableName,
-      Limit: query.limit || 10,
+      KeyConditionExpression: 'id = :id',
+      ExpressionAttributeValues: {
+        ':id': id,
+      },
+      ScanIndexForward: false, // Sort by metadata.version DESC (via top-level version key)
+      Limit: 1,
     }));
 
-    const items = (result.Items || []) as ExamItem[];
-    return { items, total: result.Count || 0 };
+    if (!result.Items || result.Items.length === 0) {
+      return null;
+    }
+
+    return result.Items[0];
+  }
+
+  async listItems(query: ListItemsQuery): Promise<{ items: ExamItem[]; total: number; nextToken?: string }> {
+    // Use GSI to query only latest versions (latestVersion = true)
+    const result = await this.client.send(new QueryCommand({
+      TableName: this.tableName,
+      IndexName: 'LatestVersionIndex',
+      KeyConditionExpression: 'latestVersion = :latestVersion',
+      ExpressionAttributeValues: {
+        ':latestVersion': 'true',
+      },
+      ScanIndexForward: false, // Sort by lastModified DESC (newest first)
+      Limit: query.limit || 10,
+      // Support pagination: if nextToken is provided, use it as ExclusiveStartKey
+      ...(query.nextToken && {
+        ExclusiveStartKey: JSON.parse(Buffer.from(query.nextToken, 'base64').toString('utf-8')),
+      }),
+    }));
+
+    // Remove DynamoDB-specific keys from items
+    const items = (result.Items || []).map((item: any) => {
+      const { version: _, latestVersion: __, lastModified: ___, ...itemData } = item;
+      return itemData;
+    }) as ExamItem[];
+
+    // Encode LastEvaluatedKey as base64 string for pagination token
+    const nextToken = result.LastEvaluatedKey
+      ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+      : undefined;
+
+    return { items, total: result.Count || 0, nextToken };
   }
 
   async createVersion(id: string): Promise<ExamItem | null> {
-    // TODO: Implement versioning strategy
-    // Options: Separate versions table, same table with sort key, etc.
-    throw new Error('Not implemented - define your versioning strategy');
+    // Get current version (with DynamoDB keys included)
+    const currentWithKeys = await this.getCurrentVersionWithKeys(id);
+    if (!currentWithKeys) return null;
+
+    // Extract the item data (remove DynamoDB-specific keys)
+    const { version: _, latestVersion: __, lastModified: ___, ...current } = currentWithKeys;
+
+    // Create new version (copy of current state with incremented version)
+    const newVersion: ExamItem = {
+      ...current,
+      metadata: {
+        ...current.metadata,
+        version: current.metadata.version + 1,
+        lastModified: Date.now(),
+      },
+    };
+
+    // Update old version: set latestVersion to false
+    await this.client.send(new PutCommand({
+      TableName: this.tableName,
+      Item: {
+        ...currentWithKeys,
+        latestVersion: 'false', // Mark old version as not latest
+      },
+    }));
+
+    // Store new version with composite key and GSI fields
+    await this.client.send(new PutCommand({
+      TableName: this.tableName,
+      Item: {
+        ...newVersion,
+        version: newVersion.metadata.version, // Sort key: projects metadata.version to top-level for DynamoDB
+        latestVersion: 'true', // GSI PK: mark as latest version
+        lastModified: newVersion.metadata.lastModified, // GSI SK: projects metadata.lastModified to top-level
+      },
+    }));
+
+    return newVersion;
   }
 
   async getAuditTrail(id: string): Promise<ExamItem[]> {

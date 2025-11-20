@@ -62,7 +62,7 @@ export class MemoryStorage implements ItemStorage {
     return updated;
   }
 
-  async listItems(query: ListItemsQuery): Promise<{ items: ExamItem[]; total: number }> {
+  async listItems(query: ListItemsQuery): Promise<{ items: ExamItem[]; total: number; nextToken?: string }> {
     let items = Array.from(this.items.values());
 
     // Filter by subject

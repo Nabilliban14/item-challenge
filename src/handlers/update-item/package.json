@@ -1,0 +1,11 @@
+{
+  "name": "update-item-handler",
+  "version": "1.0.0",
+  "description": "Handler for updating exam items by ID",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
+

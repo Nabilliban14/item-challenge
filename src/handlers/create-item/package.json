@@ -1,0 +1,11 @@
+{
+  "name": "create-item-handler",
+  "version": "1.0.0",
+  "description": "Handler for creating exam items",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "zod": "^3.23.8"
+  }
+}
+
